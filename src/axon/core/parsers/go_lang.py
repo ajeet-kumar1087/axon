@@ -148,11 +148,11 @@ class GoParser(LanguageParser):
                         result.exports.append(name)
 
     def _extract_imports(self, node: Node, content: str, result: ParseResult) -> None:
-        # import "fmt" or import ( "fmt"; "os" )
-        for child in node.children:
-            if child.type == "import_spec":
-                path_node = child.child_by_field_name("path")
-                alias_node = child.child_by_field_name("name")
+        """Extract imports from an import_declaration node."""
+        def find_specs(n: Node):
+            if n.type == "import_spec":
+                path_node = n.child_by_field_name("path")
+                alias_node = n.child_by_field_name("name")
                 if path_node:
                     path = path_node.text.decode("utf8").strip('"')
                     alias = alias_node.text.decode("utf8") if alias_node else ""
@@ -163,6 +163,10 @@ class GoParser(LanguageParser):
                             alias=alias,
                         )
                     )
+            for child in n.children:
+                find_specs(child)
+
+        find_specs(node)
 
     def _extract_call(self, node: Node, content: str, result: ParseResult) -> None:
         func_node = node.child_by_field_name("function")
